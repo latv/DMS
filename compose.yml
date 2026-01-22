@@ -1,0 +1,51 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_DATABASE=${DB_NAME}
+      - DB_USERNAME=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    networks:
+      - dms-network
+  spa:
+    build: 
+      context: ./spa
+      dockerfile: Dockerfile
+    container_name: dms-spa
+    ports:
+      - "5173:5173"
+    environment:
+      # This passes the variable from your root .env into the container
+      - VITE_API_URL=${VITE_API_URL}
+    volumes:
+      - ./spa:/app
+      - /app/node_modules
+    networks:
+      - dms-network
+    # Ensures the API starts before the frontend tries to connect
+    depends_on:
+      - api
+
+  db:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dms-db-data:/var/lib/postgresql/data
+    networks:
+      - dms-network
+
+volumes:
+  dms-db-data:
+
+networks:
+  dms-network:
+    driver: bridge
