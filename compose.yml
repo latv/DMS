@@ -17,16 +17,14 @@ services:
       dockerfile: Dockerfile
     container_name: dms-spa
     ports:
-      - "5173:5173"
+      - "3000:3000"
     environment:
-      # This passes the variable from your root .env into the container
       - VITE_API_URL=${VITE_API_URL}
     volumes:
       - ./spa:/app
       - /app/node_modules
     networks:
       - dms-network
-    # Ensures the API starts before the frontend tries to connect
     depends_on:
       - api
 
