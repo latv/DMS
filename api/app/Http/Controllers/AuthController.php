@@ -12,30 +12,36 @@ class AuthController extends Controller
         return $request->user();
     }
 
-    public function login(Request $request)
-    {
+    public function login(Request $request) {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            return response()->json([
-                'message' => 'Invalid credentials.',
-            ], 422);
+        if (!Auth::attempt($credentials)) {
+            return response()->json(['message' => 'Invalid credentials.'], 422);
         }
 
-        $request->session()->regenerate();
+        $user = Auth::user();
 
-        return response()->json($request->user());
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
     }
 
     public function logout(Request $request)
     {
-        Auth::guard('web')->logout();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        // Get the authenticated user
+        $user = $request->user();
+        
+        // If user is authenticated, revoke the current token
+        if ($user) {
+            $user->currentAccessToken()->delete();
+        }
 
         return response()->noContent();
     }

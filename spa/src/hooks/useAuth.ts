@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../lib/api'
-import axios from 'axios'
 
 export function useAuth() {
   const queryClient = useQueryClient()
@@ -29,31 +28,25 @@ export function useAuth() {
     refetchOnMount: false,
     refetchOnReconnect: false,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    enabled: !!localStorage.getItem('auth_token'), // Only fetch if token exists
   })
 
   // Login mutation
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string; remember?: boolean }) => {
-      // Get CSRF cookie first (required by Sanctum)
-      // CSRF endpoint is on web.php, so use full URL or different base
-      const baseURL = import.meta.env.VITE_API_URL.replace('/api', '')
-      try {
-        await axios.get(`${baseURL}/sanctum/csrf-cookie`, {
-          withCredentials: true,
-          headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-        })
-      } catch (error) {
-        // CSRF cookie fetch failed - might be CORS or server issue
-        console.warn('Failed to fetch CSRF cookie:', error)
-        // Continue anyway - some setups don't require CSRF for API routes
-      }
       const response = await api.post('/login', credentials)
-      return response.data
+      const { access_token, user } = response.data
+      
+      // Store token in localStorage
+      if (access_token) {
+        localStorage.setItem('auth_token', access_token)
+      }
+      
+      return { user, access_token }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user'] })
+    onSuccess: (data) => {
+      // Set user data immediately after login
+      queryClient.setQueryData(['user'], data.user)
     },
   })
 
@@ -61,9 +54,12 @@ export function useAuth() {
   const logout = useMutation({
     mutationFn: async () => {
       await api.post('/logout')
+      // Remove token from localStorage
+      localStorage.removeItem('auth_token')
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
+      queryClient.setQueryData(['user'], null)
     },
   })
 
