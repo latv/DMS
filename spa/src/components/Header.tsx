@@ -1,30 +1,71 @@
 import { Link } from '@tanstack/react-router'
-
 import { useState } from 'react'
-import { Home, Menu, X } from 'lucide-react'
+import { Home, LogIn, LogOut, Menu, User, X } from 'lucide-react'
+import { Button } from 'antd'
+import { useAuth } from '../hooks/useAuth'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const { user, logout } = useAuth()
+
+  const handleLogout = async () => {
+    try {
+      await logout.mutateAsync()
+    } catch {
+      // ignore logout errors
+    } finally {
+      setIsOpen(false)
+    }
+  }
 
   return (
     <>
-      <header className="p-4 flex items-center bg-gray-800 text-white shadow-lg">
-        <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-          aria-label="Open menu"
-        >
-          <Menu size={24} />
-        </button>
-        <h1 className="ml-4 text-xl font-semibold">
-          <Link to="/">
-            <img
-              src="/tanstack-word-logo-white.svg"
-              alt="TanStack Logo"
-              className="h-10"
-            />
-          </Link>
-        </h1>
+      <header className="p-4 flex items-center justify-between bg-gray-800 text-white shadow-lg">
+        <div className="flex items-center">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu size={24} />
+          </button>
+          <h1 className="ml-4 text-xl font-semibold">
+            <Link to="/">
+              <img
+                src="/tanstack-word-logo-white.svg"
+                alt="TanStack Logo"
+                className="h-10"
+              />
+            </Link>
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {user ? (
+            <>
+              <div className="flex items-center gap-2 text-sm">
+                <User size={18} />
+                <span className="max-w-[160px] truncate">{user.name ?? user.email}</span>
+              </div>
+              <Button
+                size="small"
+                type="default"
+                icon={<LogOut size={16} />}
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="small"
+              type="primary"
+              icon={<LogIn size={16} />}
+            >
+              <Link to="/login">Login</Link>
+            </Button>
+          )}
+        </div>
       </header>
 
       <aside
@@ -57,9 +98,18 @@ export default function Header() {
             <span className="font-medium">Home</span>
           </Link>
 
-          {/* Demo Links Start */}
-
-          {/* Demo Links End */}
+          <Link
+            to="/login"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-800 transition-colors mb-2"
+            activeProps={{
+              className:
+                'flex items-center gap-3 p-3 rounded-lg bg-cyan-600 hover:bg-cyan-700 transition-colors mb-2',
+            }}
+          >
+            <LogIn size={20} />
+            <span className="font-medium">Login</span>
+          </Link>
         </nav>
       </aside>
     </>
