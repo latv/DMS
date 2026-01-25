@@ -123,10 +123,10 @@ exit
 
 ### 5. Access the Application
 
-Once everything is running:
+Once everything is running(depends how is configurated in `compose.yml` file):
 
-* **Frontend (SPA):** Visit [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)
-* **Backend (API):** Visit [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
+* **Frontend (SPA):** Visit [http://localhost:3000]
+* **Backend (API):** Visit [http://localhost:8000]
 
 ---
 
@@ -153,4 +153,4 @@ Once everything is running:
 
 ---
 
-*This file was generated with the assistance of AI.*
+*This file was generated with the assistance of AI. And edited by author*
