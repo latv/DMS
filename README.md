@@ -1,89 +1,109 @@
-Doc Container
-Doc Container is a full-stack application designed for document management. It features a modern, separated architecture with a robust PHP backend and a reactive TypeScript frontend, all orchestrated via Docker.
+Here is the formatted `README.md` file for your project, including the requested AI-generated label and clean Markdown syntax.
 
-🛠 Technologies Used
-Backend (/api)
-Framework: Laravel 12.00
+---
 
-Database ORM: Eloquent
+# Doc Container
 
-Authentication: Laravel Sanctum
+**Doc Container** is a full-stack application designed for document management. It features a modern, separated architecture with a robust PHP backend and a reactive TypeScript frontend, all orchestrated via Docker.
 
-Testing: PHPUnit
+## 🛠 Technologies Used
 
-Frontend (/spa)
-Framework: React
+### Backend (`/api`)
 
-Build Tool: Vite
+* **Framework:** Laravel 12.x
+* **Database ORM:** Eloquent
+* **Authentication:** Laravel Sanctum
+* **Testing:** PHPUnit
 
-Language: TypeScript
+### Frontend (`/spa`)
 
-Routing: TanStack Router
+* **Framework:** React
+* **Build Tool:** Vite
+* **Language:** TypeScript
+* **Routing:** TanStack Router
+* **Styling:** Tailwind CSS
 
-Styling: CSS / Tailwind (implied by standard Vite setups)
+### Infrastructure
 
-Infrastructure
-Containerization: Docker & Docker Compose
+* **Containerization:** Docker & Docker Compose
+* **Web Server:** Nginx / Apache (via Docker)
 
-Web Server: Nginx / Apache (via Docker)
+---
 
-📋 Prerequisites
+## 📋 Prerequisites
+
 Before you begin, ensure you have the following installed on your machine:
 
-Docker Desktop
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+* [Git](https://git-scm.com/)
 
-Git
+---
 
-🚀 Setup & Installation
+## 🚀 Setup & Installation
+
 Follow these steps to get the project running locally.
 
-1. Clone the Repository
-Bash
+### 1. Clone the Repository
 
+```bash
 git clone https://github.com/latv/DMS.git
 cd DMS
 
-2. Environment Configuration
+```
+
+### 2. Environment Configuration
+
 You need to set up environment variables for the root, the API, and the SPA.
 
-Root:
+**Root:**
 
-Bash
-
+```bash
 cp .env.example .env
-Backend (API):
 
-Bash
+```
 
+**Backend (API):**
+
+```bash
 cd api
 cp .env.example .env
 # Edit .env to match your database credentials defined in compose.yml
 cd ..
-Frontend (SPA):
 
-Bash
+```
 
+**Frontend (SPA):**
+
+```bash
 cd spa
 cp .env.example .env
 cd ..
-3. Build and Run Containers
+
+```
+
+### 3. Build and Run Containers
+
 Use Docker Compose to build the images and start the services.
 
-Bash
-
+```bash
 docker compose up -d --build
-4. Post-Installation Steps (Backend)
-Once the containers are running, you need to install dependencies and set up the database within the api container.
 
-Access the API container:
+```
 
-Bash
+### 4. Post-Installation Steps (Backend)
 
+Once the containers are running, you need to install dependencies and set up the database within the API container.
+
+**Access the API container:**
+
+```bash
 docker compose exec api bash
-Run the following commands inside the container:
 
-Bash
+```
 
+**Run the following commands inside the container:**
+
+```bash
 # Install PHP dependencies
 composer install
 
@@ -95,21 +115,28 @@ php artisan migrate
 
 # (Optional) Seed the database
 php artisan db:seed
-Exit the container:
 
-Bash
+```
 
+**Exit the container:**
+
+```bash
 exit
-5. Access the Application
+
+```
+
+### 5. Access the Application
+
 Once everything is running:
 
-Frontend (SPA): Visit http://localhost:5173 (or the port defined in your compose.yml).
+* **Frontend (SPA):** Visit [http://localhost:5173](https://www.google.com/search?q=http://localhost:5173)
+* **Backend (API):** Visit [http://localhost:8000](https://www.google.com/search?q=http://localhost:8000)
 
-Backend (API): Visit http://localhost:8000 (or the port defined in your compose.yml).
+---
 
-📂 Project Structure
-Plaintext
+## 📂 Project Structure
 
+```plaintext
 ├── api/             # Laravel Backend Application
 │   ├── app/
 │   ├── bootstrap/
@@ -125,3 +152,9 @@ Plaintext
 │   └── vite.config.ts
 ├── compose.yml      # Docker Compose configuration
 └── README.md        # Project Documentation
+
+```
+
+---
+
+*This file was generated with the assistance of AI.*
