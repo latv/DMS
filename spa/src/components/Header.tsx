@@ -1,4 +1,4 @@
-import { Link } from '@tanstack/react-router'
+import { Link, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Home, LogIn, LogOut, Menu, User, X } from 'lucide-react'
 import { Button } from 'antd'
@@ -7,12 +7,16 @@ import { useAuth } from '../hooks/useAuth'
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
   const { user, logout } = useAuth()
+  const router = useRouter()
 
   const handleLogout = async () => {
     try {
       await logout.mutateAsync()
+      // Redirect to login after logout
+      router.navigate({ to: '/login' })
     } catch {
-      // ignore logout errors
+      // ignore logout errors, but still redirect
+      router.navigate({ to: '/login' })
     } finally {
       setIsOpen(false)
     }
@@ -31,11 +35,7 @@ export default function Header() {
           </button>
           <h1 className="ml-4 text-xl font-semibold">
             <Link to="/">
-              <img
-                src="/tanstack-word-logo-white.svg"
-                alt="TanStack Logo"
-                className="h-10"
-              />
+              <div>Doc container</div>
             </Link>
           </h1>
         </div>

@@ -1,15 +1,31 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
+import { createFileRoute, useRouter, useSearch, redirect } from '@tanstack/react-router'
 import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
 
 export const Route = createFileRoute('/login')({
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      redirect: (search.redirect as string) || undefined,
+    }
+  },
+  beforeLoad: ({ location }) => {
+    // If already authenticated, redirect to home or the redirect URL
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      const redirectTo = new URLSearchParams(location.search).get('redirect') || '/';
+      throw redirect({
+        to: redirectTo as any,
+      });
+    }
+  },
   component: LoginPage,
 })
 
 function LoginPage() {
   const { login } = useAuth()
   const router = useRouter()
+  const { redirect: redirectTo } = useSearch({ from: '/login' })
   const [error, setError] = useState<string | null>(null)
 
   const [form] = Form.useForm()
@@ -18,7 +34,8 @@ function LoginPage() {
     setError(null)
     try {
       await login.mutateAsync(values)
-      router.navigate({ to: '/' })
+      // Redirect to the original page or home
+      router.navigate({ to: redirectTo || '/' })
     } catch (e: any) {
       const message =
         e?.response?.data?.message ||
