@@ -1,7 +1,3 @@
-Here is the formatted `README.md` file for your project, including the requested AI-generated label and clean Markdown syntax.
-
----
-
 # Doc Container
 
 **Doc Container** is a full-stack application designed for document management. It features a modern, separated architecture with a robust PHP backend and a reactive TypeScript frontend, all orchestrated via Docker.
