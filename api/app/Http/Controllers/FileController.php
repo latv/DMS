@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CreateFolderRequest;
 use App\Http\Requests\StoreFileRequest;
 use App\Models\File;
+use App\Services\FileService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -13,6 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileController extends Controller
 {
+    public function __construct(protected FileService $fileService) {}
+
     public function index(Request $request): JsonResponse
     {
         $parentId = $request->query('parent_id');
@@ -26,18 +29,9 @@ class FileController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        $breadcrumbs = [];
-        if ($parentId) {
-            $current = File::find($parentId);
-            while ($current) {
-                array_unshift($breadcrumbs, ['id' => $current->id, 'name' => $current->name]);
-                $current = $current->parent;
-            }
-        }
-
         return response()->json([
             'files' => $files,
-            'breadcrumbs' => $breadcrumbs,
+            'breadcrumbs' => $this->fileService->breadcrumbs($parentId),
         ]);
     }
 
@@ -90,15 +84,7 @@ class FileController extends Controller
 
     public function destroy(File $file): Response
     {
-        if ($file->is_folder) {
-            $this->deleteFolderContents($file);
-        } else {
-            if ($file->path && Storage::exists($file->path)) {
-                Storage::delete($file->path);
-            }
-        }
-
-        $file->delete();
+        $this->fileService->deleteFile($file);
 
         return response()->noContent();
     }

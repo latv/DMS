@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Laravel\Sanctum\Sanctum; // Ensure Sanctum is installed/imported
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class FileManagementTest extends TestCase
@@ -65,7 +65,7 @@ class FileManagementTest extends TestCase
             'mime_type' => 'application/pdf',
         ]);
 
-        $path = 'uploads/' . $file->hashName();
+        $path = 'uploads/'.$file->hashName();
         Storage::disk('local')->assertExists($path);
     }
 
@@ -85,7 +85,7 @@ class FileManagementTest extends TestCase
         $response->assertStatus(201)
             ->assertJson([
                 'name' => 'New Folder',
-                'is_folder' => true
+                'is_folder' => true,
             ]);
 
         $this->assertDatabaseHas('files', [
@@ -159,7 +159,7 @@ class FileManagementTest extends TestCase
             'parent_id' => $folder->id,
             'is_folder' => false,
         ]);
-        
+
         Storage::put('uploads/child.txt', 'content');
 
         $response = $this->deleteJson("/api/files/{$folder->id}");
@@ -168,7 +168,7 @@ class FileManagementTest extends TestCase
 
         $this->assertDatabaseMissing('files', ['id' => $folder->id]);
         $this->assertDatabaseMissing('files', ['id' => $childFile->id]);
-        
+
         Storage::assertMissing('uploads/child.txt');
     }
 }
