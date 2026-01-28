@@ -2,27 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreateFolderRequest;
+use App\Http\Requests\StoreFileRequest;
 use App\Models\File;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FileController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $parentId = $request->query('parent_id');
 
-        // Handle 'null' string or missing value as root
         if ($parentId === 'null' || $parentId === 'root') {
             $parentId = null;
         }
 
         $files = File::where('parent_id', $parentId)
-            ->orderBy('is_folder', 'desc') // Folders first
+            ->orderBy('is_folder', 'desc')
             ->orderBy('name', 'asc')
             ->get();
 
-        // Build breadcrumbs
         $breadcrumbs = [];
         if ($parentId) {
             $current = File::find($parentId);
@@ -38,28 +41,13 @@ class FileController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreFileRequest $request): JsonResponse
     {
-        $request->validate([
-            'file' => 'required|file',
-            'parent_id' => 'nullable|exists:files,id',
-        ]);
-
         $uploadedFile = $request->file('file');
         $fileName = $uploadedFile->getClientOriginalName();
         $parentId = $request->input('parent_id');
 
-        // Check for duplicate name in the same folder
-        $exists = File::where('parent_id', $parentId)
-            ->where('name', $fileName)
-            ->exists();
-
-        if ($exists) {
-            return response()->json(['message' => 'A file with this name already exists.'], 422);
-        }
-
-        // Store physical file
-        $path = $uploadedFile->store('uploads'); // Stores in storage/app/uploads
+        $path = $uploadedFile->store('uploads');
 
         $file = File::create([
             'name' => $fileName,
@@ -73,26 +61,11 @@ class FileController extends Controller
         return response()->json($file, 201);
     }
 
-    public function createFolder(Request $request)
+    public function createFolder(CreateFolderRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:files,id',
-        ]);
-
-        // Check if folder with same name exists in this parent
-        $exists = File::where('parent_id', $request->input('parent_id'))
-            ->where('name', $request->input('name'))
-            ->where('is_folder', true)
-            ->exists();
-
-        if ($exists) {
-            return response()->json(['message' => 'Folder already exists'], 422);
-        }
-
         $folder = File::create([
             'name' => $request->input('name'),
-            'path' => null, // Folders don't have a physical path in this virtual system
+            'path' => null,
             'mime_type' => null,
             'size' => 0,
             'parent_id' => $request->input('parent_id'),
@@ -102,28 +75,24 @@ class FileController extends Controller
         return response()->json($folder, 201);
     }
 
-    public function download(File $file)
+    public function download(File $file): StreamedResponse
     {
-        // Prevent downloading folders
         if ($file->is_folder) {
             abort(422, 'Cannot download a folder directly.');
         }
 
-        // Check if physical file exists
-        if (!Storage::exists($file->path)) {
+        if (! Storage::exists($file->path)) {
             abort(404, 'File not found on disk.');
         }
 
         return Storage::download($file->path, $file->name);
     }
 
-    public function destroy(File $file)
+    public function destroy(File $file): Response
     {
         if ($file->is_folder) {
-            // Recursive delete for folders
             $this->deleteFolderContents($file);
         } else {
-            // Single file delete
             if ($file->path && Storage::exists($file->path)) {
                 Storage::delete($file->path);
             }
@@ -134,12 +103,8 @@ class FileController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Helper to recursively delete folder contents
-     */
     private function deleteFolderContents(File $folder)
     {
-        // Get all children (files and folders)
         $children = File::where('parent_id', $folder->id)->get();
 
         foreach ($children as $child) {

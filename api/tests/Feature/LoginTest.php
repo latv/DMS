@@ -26,7 +26,7 @@ class LoginTest extends TestCase
 
         // 3. Assert success and token presence
         $response->assertStatus(200)
-                 ->assertJsonStructure(['access_token', 'user']);
+            ->assertJsonStructure(['access_token', 'user']);
     }
 
     public function test_user_cannot_login_with_invalid_credentials(): void
@@ -39,6 +39,6 @@ class LoginTest extends TestCase
         ]);
 
         $response->assertStatus(401)
-                 ->assertJson(['message' => 'Invalid credentials.']);
+            ->assertJson(['message' => 'Invalid credentials.']);
     }
 }

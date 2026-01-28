@@ -17,13 +17,13 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::firstOrCreate(
-                ['email' => 'admin@example.com'],
-                [
-                    'name' => 'Default Admin',
-                    'surname' => 'Admin',
-                    'password' => Hash::make('password'),
-                    'email_verified_at' => now(),
-                ]
+            ['email' => 'admin@example.com'],
+            [
+                'name' => 'Default Admin',
+                'surname' => 'Admin',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
         );
     }
 }
