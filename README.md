@@ -152,5 +152,11 @@ Once everything is running(depends how is configurated in `compose.yml` file):
 ```
 
 ---
+## 🧪 Running Tests
+Backend feature test
+```bash
+docker compose exec api php artisan test
+```
 
-*This file was generated with the assistance of AI. And edited by author*
+
+*This 'README.md' file was generated with the assistance of AI. And edited by author*
