@@ -46,14 +46,27 @@ class FileController extends Controller
         ]);
 
         $uploadedFile = $request->file('file');
+        $fileName = $uploadedFile->getClientOriginalName();
+        $parentId = $request->input('parent_id');
+
+        // Check for duplicate name in the same folder
+        $exists = File::where('parent_id', $parentId)
+            ->where('name', $fileName)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'A file with this name already exists.'], 422);
+        }
+
+        // Store physical file
         $path = $uploadedFile->store('uploads'); // Stores in storage/app/uploads
 
         $file = File::create([
-            'name' => $uploadedFile->getClientOriginalName(),
+            'name' => $fileName,
             'path' => $path,
             'mime_type' => $uploadedFile->getMimeType(),
             'size' => $uploadedFile->getSize(),
-            'parent_id' => $request->input('parent_id'),
+            'parent_id' => $parentId,
             'is_folder' => false,
         ]);
 
@@ -79,7 +92,7 @@ class FileController extends Controller
 
         $folder = File::create([
             'name' => $request->input('name'),
-            'path' => null,
+            'path' => null, // Folders don't have a physical path in this virtual system
             'mime_type' => null,
             'size' => 0,
             'parent_id' => $request->input('parent_id'),
@@ -87,5 +100,57 @@ class FileController extends Controller
         ]);
 
         return response()->json($folder, 201);
+    }
+
+    public function download(File $file)
+    {
+        // Prevent downloading folders
+        if ($file->is_folder) {
+            abort(422, 'Cannot download a folder directly.');
+        }
+
+        // Check if physical file exists
+        if (!Storage::exists($file->path)) {
+            abort(404, 'File not found on disk.');
+        }
+
+        return Storage::download($file->path, $file->name);
+    }
+
+    public function destroy(File $file)
+    {
+        if ($file->is_folder) {
+            // Recursive delete for folders
+            $this->deleteFolderContents($file);
+        } else {
+            // Single file delete
+            if ($file->path && Storage::exists($file->path)) {
+                Storage::delete($file->path);
+            }
+        }
+
+        $file->delete();
+
+        return response()->noContent();
+    }
+
+    /**
+     * Helper to recursively delete folder contents
+     */
+    private function deleteFolderContents(File $folder)
+    {
+        // Get all children (files and folders)
+        $children = File::where('parent_id', $folder->id)->get();
+
+        foreach ($children as $child) {
+            if ($child->is_folder) {
+                $this->deleteFolderContents($child);
+            } else {
+                if ($child->path && Storage::exists($child->path)) {
+                    Storage::delete($child->path);
+                }
+            }
+            $child->delete();
+        }
     }
 }

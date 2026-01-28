@@ -12,7 +12,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // file management routes
-    Route::get('/file', [FileController::class, 'index']);
-    Route::post('/file', [FileController::class, 'store']);
-    Route::post('/folder', [FileController::class, 'createFolder']);
+    Route::get('/files', [FileController::class, 'index']);
+    Route::post('/files', [FileController::class, 'store']);
+    Route::delete('/files/{file}', [FileController::class, 'destroy']);
+    Route::get('/files/{file}/download', [FileController::class, 'download']);
+    
+    // Folder specific
+    Route::post('/folders', [FileController::class, 'createFolder']);
 });

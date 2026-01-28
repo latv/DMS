@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Breadcrumb, Button, Modal, Input, Upload, message } from 'antd';
-import { FolderOutlined, FileOutlined, UploadOutlined, HomeOutlined } from '@ant-design/icons';
+import { Table, Breadcrumb, Button, Modal, Input, Upload, message, Popconfirm, Tooltip } from 'antd';
+import { 
+    FolderOutlined, 
+    FileOutlined, 
+    UploadOutlined, 
+    HomeOutlined, 
+    DeleteOutlined, 
+    DownloadOutlined 
+} from '@ant-design/icons';
 import type { UploadRequestOption } from 'rc-upload/lib/interface';
-import axios from 'axios';
+// Use the shared API client that handles the Auth Token automatically
+import api from '../lib/api';
 
 interface FileItem {
     id: number;
@@ -26,20 +34,10 @@ const FileStorage: React.FC = () => {
     const [newFolderName, setNewFolderName] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // Helper to get configured axios instance or use default
-    // Assuming /api prefix based on context
-    const api = axios.create({
-        baseURL: '/api',
-        headers: {
-            'Accept': 'application/json',
-            // Add Authorization header here if not handled by global interceptor
-            // 'Authorization': `Bearer ${localStorage.getItem('token')}` 
-        }
-    });
-
     const fetchFiles = async (parentId: number | null) => {
         setLoading(true);
         try {
+            // Updated to standard REST endpoint '/files'
             const response = await api.get('/files', {
                 params: { parent_id: parentId }
             });
@@ -60,7 +58,8 @@ const FileStorage: React.FC = () => {
     const handleCreateFolder = async () => {
         if (!newFolderName.trim()) return;
         try {
-            await api.post('/folder', {
+            // Updated to standard REST endpoint '/folders'
+            await api.post('/folders', {
                 name: newFolderName,
                 parent_id: currentFolderId
             });
@@ -94,6 +93,35 @@ const FileStorage: React.FC = () => {
         }
     };
 
+    const handleDownload = async (record: FileItem) => {
+        try {
+            const response = await api.get(`/files/${record.id}/download`, {
+                responseType: 'blob',
+            });
+            
+            // Create a blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', record.name);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            message.error('Failed to download file');
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        try {
+            await api.delete(`/files/${id}`);
+            message.success('Item deleted');
+            fetchFiles(currentFolderId);
+        } catch (error) {
+            message.error('Failed to delete item');
+        }
+    };
+
     const columns = [
         {
             title: 'Name',
@@ -106,11 +134,15 @@ const FileStorage: React.FC = () => {
                         display: 'flex', 
                         alignItems: 'center', 
                         gap: '8px',
-                        color: record.is_folder ? '#1890ff' : 'inherit'
+                        color: record.is_folder ? '#1890ff' : 'inherit',
+                        fontWeight: record.is_folder ? 500 : 400
                     }}
                     onClick={() => record.is_folder && setCurrentFolderId(record.id)}
                 >
-                    {record.is_folder ? <FolderOutlined style={{ color: '#faad14' }} /> : <FileOutlined style={{ color: '#8c8c8c' }} />}
+                    {record.is_folder ? 
+                        <FolderOutlined style={{ fontSize: '18px', color: '#faad14' }} /> : 
+                        <FileOutlined style={{ fontSize: '18px', color: '#8c8c8c' }} />
+                    }
                     {text}
                 </div>
             ),
@@ -119,8 +151,9 @@ const FileStorage: React.FC = () => {
             title: 'Size',
             dataIndex: 'size',
             key: 'size',
-            render: (size: number, record: FileItem) => record.is_folder ? '-' : `${(size / 1024).toFixed(2)} KB`,
-            width: 150,
+            render: (size: number, record: FileItem) => 
+                record.is_folder ? '-' : `${(size / 1024).toFixed(2)} KB`,
+            width: 120,
         },
         {
             title: 'Last Modified',
@@ -128,6 +161,39 @@ const FileStorage: React.FC = () => {
             key: 'updated_at',
             render: (date: string) => new Date(date).toLocaleString(),
             width: 200,
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            width: 120,
+            render: (_: any, record: FileItem) => (
+                <div style={{ display: 'flex', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                    {!record.is_folder && (
+                        <Tooltip title="Download">
+                            <Button 
+                                type="text" 
+                                icon={<DownloadOutlined />} 
+                                size="small" 
+                                onClick={() => handleDownload(record)}
+                            />
+                        </Tooltip>
+                    )}
+                    <Popconfirm
+                        title="Delete this item?"
+                        description="This action cannot be undone."
+                        onConfirm={() => handleDelete(record.id)}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button 
+                            type="text" 
+                            danger 
+                            icon={<DeleteOutlined />} 
+                            size="small" 
+                        />
+                    </Popconfirm>
+                </div>
+            ),
         }
     ];
 
@@ -152,10 +218,33 @@ const FileStorage: React.FC = () => {
                 </div>
             </div>
 
-            <Table dataSource={files} columns={columns} rowKey="id" loading={loading} pagination={false} />
+            <Table 
+                dataSource={files} 
+                columns={columns} 
+                rowKey="id" 
+                loading={loading} 
+                pagination={false}
+                onRow={(record) => ({
+                    onClick: () => {
+                        if (record.is_folder) setCurrentFolderId(record.id);
+                    },
+                    style: { cursor: record.is_folder ? 'pointer' : 'default' }
+                })}
+            />
 
-            <Modal title="Create New Folder" open={isModalOpen} onOk={handleCreateFolder} onCancel={() => setIsModalOpen(false)}>
-                <Input placeholder="Folder Name" value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} onPressEnter={handleCreateFolder} />
+            <Modal 
+                title="Create New Folder" 
+                open={isModalOpen} 
+                onOk={handleCreateFolder} 
+                onCancel={() => setIsModalOpen(false)}
+            >
+                <Input 
+                    placeholder="Folder Name" 
+                    value={newFolderName} 
+                    onChange={(e) => setNewFolderName(e.target.value)} 
+                    onPressEnter={handleCreateFolder} 
+                    autoFocus
+                />
             </Modal>
         </div>
     );
