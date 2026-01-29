@@ -155,7 +155,7 @@ Once everything is running(depends how is configurated in `compose.yml` file):
 ## 🧪 Running Tests
 Backend feature test
 ```bash
-docker compose exec api php artisan test
+docker compose exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: api php artisan test
 ```
 
 
