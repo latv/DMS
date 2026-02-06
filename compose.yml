@@ -28,7 +28,19 @@ services:
       - dms-network
     depends_on:
       - api
-
+# --- NEW OCR SERVICE ---
+  ocr:
+    build: 
+      context: ./ocr
+      dockerfile: Dockerfile
+    container_name: dms-ocr
+    restart: unless-stopped
+    # Expose 8000 internally to other containers
+    # Expose 5000 to your host machine for testing (optional)
+    ports:
+      - "5000:8000" 
+    networks:
+      - dms-network
   db:
     image: postgres:17-alpine
     ports:

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+paddlepaddle>=2.6.0
+paddleocr>=2.7.0
+requests
+pdf2image
+python-docx
+openpyxl

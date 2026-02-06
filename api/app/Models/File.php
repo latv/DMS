@@ -15,6 +15,7 @@ class File extends Model
         'name',
         'path',
         'mime_type',
+        'ocr_text',
         'size',
         'parent_id',
         'is_folder',

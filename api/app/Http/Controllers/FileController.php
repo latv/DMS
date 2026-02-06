@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Jobs\ProcessFileOcr;
 
 class FileController extends Controller
 {
@@ -51,6 +52,8 @@ class FileController extends Controller
             'parent_id' => $parentId,
             'is_folder' => false,
         ]);
+
+        ProcessFileOcr::dispatch($file);
 
         return response()->json($file, 201);
     }
