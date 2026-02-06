@@ -1,8 +1,9 @@
 services:
   api:
     build: ./api
+    container_name: dms-api
     volumes:
-    - ./api:/var/www
+      - ./api:/var/www
     ports:
       - "8000:8000"
     environment:
@@ -13,6 +14,30 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
     networks:
       - dms-network
+    depends_on:
+      - db
+
+  # This service processes the background OCR jobs
+  php-worker:
+    build: ./api
+    container_name: dms-worker
+    restart: unless-stopped
+    command: php artisan queue:work --timeout=300
+    volumes:
+      - ./api:/var/www
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_DATABASE=${DB_NAME}
+      - DB_USERNAME=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - QUEUE_CONNECTION=database
+    networks:
+      - dms-network
+    depends_on:
+      - db
+      - ocr
+
   spa:
     build: 
       context: ./spa
@@ -28,21 +53,21 @@ services:
       - dms-network
     depends_on:
       - api
-# --- NEW OCR SERVICE ---
+
   ocr:
     build: 
       context: ./ocr
       dockerfile: Dockerfile
     container_name: dms-ocr
     restart: unless-stopped
-    # Expose 8000 internally to other containers
-    # Expose 5000 to your host machine for testing (optional)
     ports:
       - "5000:8000" 
     networks:
       - dms-network
+
   db:
     image: postgres:17-alpine
+    container_name: dms-db
     ports:
       - "5432:5432"
     environment:
